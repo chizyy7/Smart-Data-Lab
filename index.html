@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartDataLab | Notebook Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body data-theme="dark">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand-block">
+                <div class="brand-mark">SD</div>
+                <div>
+                    <p class="eyebrow">Notebook Data Workspace</p>
+                    <h1>SmartDataLab</h1>
+                    <p class="muted-copy">Lightweight browser notebook powered by Python + pandas.</p>
+                </div>
+            </div>
+
+            <button id="sidebar-upload-button" class="primary-button full-width" type="button">Upload Dataset</button>
+            <input id="dataset-file" type="file" name="dataset" accept=".csv,.xlsx,.xls,.json" hidden>
+
+            <section class="sidebar-card">
+                <p class="eyebrow">Dataset Metrics</p>
+                <div class="metric-grid">
+                    <article class="metric-box">
+                        <span>Rows</span>
+                        <strong id="metric-rows">--</strong>
+                    </article>
+                    <article class="metric-box">
+                        <span>Columns</span>
+                        <strong id="metric-columns">--</strong>
+                    </article>
+                    <article class="metric-box">
+                        <span>Quality</span>
+                        <strong id="metric-quality">--</strong>
+                    </article>
+                    <article class="metric-box">
+                        <span>History</span>
+                        <strong id="metric-history">0</strong>
+                    </article>
+                </div>
+            </section>
+
+            <section class="sidebar-card">
+                <p class="eyebrow">Session</p>
+                <h2 id="active-dataset-name">No dataset loaded</h2>
+                <p id="active-dataset-meta" class="muted-copy">Load CSV, Excel, or JSON to start notebook execution.</p>
+                <span id="connection-status" class="status-chip">Checking backend</span>
+            </section>
+
+            <nav class="sidebar-nav">
+                <button class="nav-link" data-target="loader-panel"><span>00</span> Loader</button>
+                <button class="nav-link" data-target="cell-preview"><span>01</span> Preview</button>
+                <button class="nav-link" data-target="cell-info"><span>02</span> Info</button>
+                <button class="nav-link" data-target="cell-stats"><span>03</span> Statistics</button>
+                <button class="nav-link" data-target="cell-code"><span>04</span> Pandas Cell</button>
+                <button class="nav-link" data-target="cell-chart"><span>05</span> Charts</button>
+                <button class="nav-link" data-target="cell-insights"><span>06</span> AI Insights</button>
+                <button class="nav-link" data-target="cell-export"><span>07</span> Export</button>
+                <button class="nav-link" data-target="history-panel"><span>08</span> Notebook History</button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="ghost-button full-width" type="button">Switch Theme</button>
+                <button id="save-version-button" class="secondary-button full-width" type="button" disabled>Save Dataset Version</button>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <header class="panel workspace-header">
+                <div>
+                    <p class="eyebrow">Jupyter-Style Sequence</p>
+                    <h2>Simple Colab-like Notebook for Data Analysis</h2>
+                    <p class="muted-copy">Outputs render directly under each notebook cell and dataset state persists across all cells.</p>
+                </div>
+                <button id="reset-session-button" class="ghost-button" type="button">Reset Session</button>
+            </header>
+
+            <section id="loader-panel" class="panel loader-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Dataset Loader</p>
+                        <h3>Upload, drag/drop, or load by local file path</h3>
+                    </div>
+                    <span id="file-name-label" class="status-chip">No file selected</span>
+                </div>
+
+                <form id="upload-form" class="stack-form">
+                    <label id="upload-dropzone" class="upload-dropzone" for="dataset-file">
+                        <span class="dropzone-title">Drag and drop dataset file</span>
+                        <span class="muted-copy">Supports CSV, Excel, and JSON</span>
+                    </label>
+                    <div class="button-row">
+                        <button id="browse-button" class="ghost-button" type="button">Browse Files</button>
+                        <button id="upload-button" class="primary-button" type="submit">Load Dataset</button>
+                    </div>
+                </form>
+
+                <form id="path-form" class="inline-form">
+                    <input id="path-input" class="text-input" type="text" placeholder="Local path example: C:/Users/you/data.csv">
+                    <button id="path-load-button" class="secondary-button" type="submit">Load Path</button>
+                </form>
+
+                <pre id="loader-output" class="output-block">Upload a dataset to initialize notebook cells.</pre>
+            </section>
+
+            <section class="notebook-stack">
+                <article id="cell-preview" class="panel notebook-cell">
+                    <div class="cell-label">Cell 1</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Dataset Preview</p>
+                                <h3>`df.head()`</h3>
+                            </div>
+                            <span id="preview-status" class="status-chip">Awaiting dataset</span>
+                        </div>
+                        <input id="preview-filter" class="text-input" type="search" placeholder="Filter preview rows">
+                        <div class="table-shell">
+                            <table id="preview-table" class="data-table"></table>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="cell-info" class="panel notebook-cell">
+                    <div class="cell-label">Cell 2</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Dataset Info</p>
+                                <h3>`df.info()`</h3>
+                            </div>
+                        </div>
+                        <pre id="info-output" class="output-block">Load a dataset to see dataframe info output.</pre>
+                    </div>
+                </article>
+
+                <article id="cell-stats" class="panel notebook-cell">
+                    <div class="cell-label">Cell 3</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Dataset Statistics</p>
+                                <h3>`df.describe()`</h3>
+                            </div>
+                        </div>
+                        <div id="stats-output" class="table-shell"></div>
+                    </div>
+                </article>
+
+                <article id="cell-code" class="panel notebook-cell">
+                    <div class="cell-label">Cell 4</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Code Execution</p>
+                                <h3>Run pandas commands</h3>
+                            </div>
+                        </div>
+                        <form id="command-form" class="stack-form">
+                            <input id="command-input" class="text-input" type="text" placeholder='Try df.dropna(), df.groupby("column"), df.value_counts()'>
+                            <div id="suggestions" class="suggestions"></div>
+                            <button id="run-command-button" class="primary-button" type="submit" disabled>Run Command</button>
+                        </form>
+                        <div id="command-output-stack" class="output-stack"></div>
+                    </div>
+                </article>
+
+                <article id="cell-chart" class="panel notebook-cell">
+                    <div class="cell-label">Cell 5</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Visualization</p>
+                                <h3>Histogram, Scatter, Correlation Heatmap</h3>
+                            </div>
+                        </div>
+                        <form id="chart-form" class="chart-form">
+                            <select id="chart-type" class="text-input" disabled>
+                                <option value="histogram">Histogram</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="correlation">Correlation Heatmap</option>
+                            </select>
+                            <select id="chart-x" class="text-input" disabled></select>
+                            <select id="chart-y" class="text-input" disabled></select>
+                            <button id="render-chart-button" class="primary-button" type="submit" disabled>Generate Chart</button>
+                        </form>
+                        <div id="chart-output" class="chart-canvas"></div>
+                    </div>
+                </article>
+
+                <article id="cell-insights" class="panel notebook-cell">
+                    <div class="cell-label">Cell 6</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">AI Insight Panel</p>
+                                <h3>Dataset quality findings</h3>
+                            </div>
+                        </div>
+                        <div id="insights-output" class="insights"></div>
+                    </div>
+                </article>
+
+                <article id="cell-export" class="panel notebook-cell">
+                    <div class="cell-label">Cell 7</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Export</p>
+                                <h3>Download dataset as CSV, JSON, or Excel</h3>
+                            </div>
+                        </div>
+                        <div class="button-row">
+                            <button class="ghost-button export-button" data-export-format="csv" type="button" disabled>Export CSV</button>
+                            <button class="ghost-button export-button" data-export-format="json" type="button" disabled>Export JSON</button>
+                            <button class="ghost-button export-button" data-export-format="xlsx" type="button" disabled>Export Excel</button>
+                        </div>
+                        <pre id="export-output" class="output-block">Export status will appear here.</pre>
+                    </div>
+                </article>
+
+                <article id="history-panel" class="panel notebook-cell">
+                    <div class="cell-label">Cell 8</div>
+                    <div class="cell-content">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Notebook History</p>
+                                <h3>Executed operations stack</h3>
+                            </div>
+                        </div>
+                        <div id="history-output" class="history-list"></div>
+                    </div>
+                </article>
+            </section>
+
+            <div id="toast" class="toast" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
